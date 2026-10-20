@@ -1,0 +1,15 @@
+" A small, honest vimrc. Every line earns its place; if a line's
+" effect ever surprises you, delete the line, not the file.
+
+set number              " show line numbers -- knowing where you are helps
+set expandtab           " the Tab key inserts spaces, not a tab character
+set tabstop=4           " a tab character in a file displays 4 columns wide
+set shiftwidth=4        " one indent step (>> and friends) is 4 columns
+set ignorecase          " searching ignores case...
+set smartcase           " ...unless the pattern contains a capital letter
+set incsearch           " search as you type, not after you press Enter
+set hlsearch            " highlight the matches so you can see them
+set undofile            " remember undo history after the file is closed
+
+syntax on               " colour text by file type
+filetype plugin indent on

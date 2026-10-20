@@ -1,0 +1,26 @@
+site_name: Vim for Mere Mortals
+site_description: Plain-language Vim. Modes, getting out alive, moving by word and search, the operator and motion grammar, visual block editing, undo that really undoes, registers and macros, search and replace, buffers in brief, and a small honest vimrc, with every operation run for real in a scripted lab.
+site_url: https://paulsullivan33-dev.github.io/vim-for-mere-mortals/
+
+# Guides live at the repo root (nice for GitHub browsing).
+# The deploy workflow copies them into docs/ before building.
+theme:
+  name: material
+
+nav:
+  - Home: index.md
+  - Modes, the One Idea: modes-the-one-idea.md
+  - Getting Out First: getting-out-first.md
+  - Moving Around: moving-around.md
+  - The Editing Grammar: the-editing-grammar.md
+  - Inserting Text: inserting-text.md
+  - Visual Mode: visual-mode.md
+  - Undo and Redo: undo-and-redo.md
+  - Registers and Macros: registers-and-macros.md
+  - Search and Replace: search-and-replace.md
+  - Buffers and Windows: buffers-and-windows.md
+  - The Small, Honest Vimrc: the-small-honest-vimrc.md
+  - Learning More: learning-more.md
+  - When It Confuses You: when-it-confuses-you.md
+  - Glossary: glossary.md
+  - Writing Criteria: criteria.md

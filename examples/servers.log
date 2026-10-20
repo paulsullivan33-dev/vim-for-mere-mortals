@@ -1,0 +1,8 @@
+INFO 06:00 backup started
+DEBUG scanning /srv
+DEBUG reading config
+
+INFO 06:01 backup finished
+
+DEBUG cleanup pass
+INFO 06:02 mail sent
