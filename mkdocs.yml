@@ -1,6 +1,7 @@
 site_name: Vim for Mere Mortals
 site_description: Plain-language Vim. Modes, getting out alive, moving by word and search, the operator and motion grammar, visual block editing, undo that really undoes, registers and macros, search and replace, buffers in brief, and a small honest vimrc, with every operation run for real in a scripted lab.
 site_url: https://paulsullivan33-dev.github.io/vim-for-mere-mortals/
+copyright: 'Part of <a href="https://paulsullivan33-dev.github.io/mere-mortals/">For Mere Mortals</a> · Text <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>, code MIT'
 
 # Guides live at the repo root (nice for GitHub browsing).
 # The deploy workflow copies them into docs/ before building.
