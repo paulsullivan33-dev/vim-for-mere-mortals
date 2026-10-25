@@ -3,14 +3,44 @@
 # Every demo runs the real vim on this machine against a fresh copy of a
 # fixture, and the transcript records the command, the file before, the
 # file after, and the diff between them. Nothing is typed by hand.
+#
+# The fixtures ship beside this script (the examples/ directory of the
+# repo), so a plain clone can run the lab from anywhere:
+#     ./run-lab.sh
+# Work files and transcripts land in a fresh temporary directory whose
+# path is printed at the start and the end -- never in a hard-coded
+# home-directory layout, and nothing outside that directory is written.
 set -u
 exec </dev/null   # nothing in this lab reads the terminal; see show() below
-LAB="$HOME/workspace/vim-lab"
-FIX="$LAB/fixtures"
-WORK="$LAB/work"
-TR="$LAB/transcripts"
+
+fail() { printf 'run-lab: %s\n' "$*" >&2; exit 1; }
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" \
+  || fail "cannot locate the script's own directory"
+FIX="$SCRIPT_DIR"
+EXAMPLES_VIMRC="$SCRIPT_DIR/vimrc"
+
+# Preflight: the lab proves things with real tools and real fixtures.
+# Fail loudly here when one is missing -- the old version ran with
+# set -u only, so a missing fixture just buried cp errors inside the
+# transcripts and the lab still reported success.
+for tool in vim diff script; do
+  command -v "$tool" >/dev/null 2>&1 || fail "required tool not found: $tool"
+done
+for fixture in notes.txt servers.log sentence.txt tasks.txt block.txt; do
+  [ -f "$FIX/$fixture" ] || fail "fixture missing: $FIX/$fixture"
+done
+[ -f "$EXAMPLES_VIMRC" ] || fail "example vimrc missing: $EXAMPLES_VIMRC"
+TUTOR="$(ls -d /usr/share/vim/vim*/tutor/tutor 2>/dev/null | sort -V | tail -n 1)"
+[ -n "$TUTOR" ] || fail "vim tutor file not found under /usr/share/vim"
+
+OUT="$(mktemp -d "${TMPDIR:-/tmp}/vim-lab.XXXXXXXX")" \
+  || fail "cannot create the lab output directory"
+WORK="$OUT/work"
+TR="$OUT/transcripts"
 VIM="vim -Nu NONE -n -i NONE -es"
-rm -rf "$WORK"; mkdir -p "$WORK" "$TR"
+mkdir -p "$WORK" "$TR"
+printf 'Lab output: %s\n' "$OUT"
 
 hdr() { printf '=== %s ===\n' "$1"; }
 # show LABEL FILE prints a labelled file. With FILE=/dev/null it prints
@@ -26,8 +56,8 @@ show() { printf -- '--- %s ---\n' "$1"; if [ "$2" = /dev/null ]; then cat; else 
   vim --version | head -3
   show "command" /dev/null <<<'$ command -v vim vimtutor'
   command -v vim vimtutor
-  show "command" /dev/null <<<'$ head -8 /usr/share/vim/vim91/tutor/tutor'
-  head -8 /usr/share/vim/vim91/tutor/tutor
+  show "command" /dev/null <<<"\$ head -8 $TUTOR"
+  head -8 "$TUTOR"
 } > "$TR/01-version-and-tutor.txt" 2>&1
 
 # ------------------------------------------------------------- 02 substitute
@@ -229,13 +259,13 @@ EOF
 {
   hdr "11 - the example .vimrc: what :set reports, and what a Tab becomes"
   show "command" /dev/null <<<'$ vim -Nu examples/vimrc -n -i NONE -es -c "redir! > report" -c "silent set number? expandtab? tabstop? shiftwidth? ignorecase? smartcase? incsearch? hlsearch? undofile?" -c "redir END" -c "q!"'
-  ( cd "$WORK" && vim -Nu "$LAB/examples-vimrc" -n -i NONE -es \
+  ( cd "$WORK" && vim -Nu "$EXAMPLES_VIMRC" -n -i NONE -es \
       -c 'redir! > vimrc-report.txt' \
       -c 'silent set number? expandtab? tabstop? shiftwidth? ignorecase? smartcase? incsearch? hlsearch? undofile?' \
       -c 'redir END' -c 'q!' )
   show ":set report with the example vimrc loaded" "$WORK/vimrc-report.txt"
   : > "$WORK/tab-with.txt"; : > "$WORK/tab-without.txt"
-  ( cd "$WORK" && vim -Nu "$LAB/examples-vimrc" -n -i NONE -es tab-with.txt \
+  ( cd "$WORK" && vim -Nu "$EXAMPLES_VIMRC" -n -i NONE -es tab-with.txt \
       -c 'execute "normal! i\<Tab>indented\<Esc>"' -c 'wq' )
   ( cd "$WORK" && $VIM tab-without.txt \
       -c 'execute "normal! i\<Tab>indented\<Esc>"' -c 'wq' )
@@ -319,4 +349,26 @@ EOF
   show "diff" /dev/null; diff "$FIX/tasks.txt" "$WORK/visl.txt" || true
 } > "$TR/13-words-inserting-visual-line.txt" 2>&1
 
-printf 'Lab complete: %s transcripts\n' "$(ls "$TR" | wc -l)"
+# ------------------------------------------------------------ verification
+# Every expected transcript must exist, be non-empty, and carry no
+# buried tool errors -- the failure mode the old driver shipped
+# silently when its hard-coded fixture directory was not there.
+failed=0
+for name in \
+  01-version-and-tutor 02-substitute 03-delete-lines 04-text-objects \
+  05-macro 06-visual-block 07-undo-redo 08-registers 09-search-and-move \
+  10-exits 11-vimrc-effects 12-buffers-windows \
+  13-words-inserting-visual-line; do
+  if [ ! -s "$TR/$name.txt" ]; then
+    printf 'run-lab: transcript missing or empty: %s\n' "$TR/$name.txt" >&2
+    failed=1
+  fi
+done
+if grep -lE 'cannot stat|No such file or directory' "$TR"/*.txt >/dev/null 2>&1; then
+  printf 'run-lab: a transcript contains a file error:\n' >&2
+  grep -lE 'cannot stat|No such file or directory' "$TR"/*.txt >&2
+  failed=1
+fi
+[ "$failed" -eq 0 ] || exit 1
+
+printf 'Lab complete: %s transcripts in %s\n' "$(ls "$TR" | wc -l)" "$TR"
